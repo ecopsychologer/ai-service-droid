@@ -1,39 +1,30 @@
 import speech_recognition as sr
-import time
 
 # Initialize recognizer class (for recognizing the speech)
 recognizer = sr.Recognizer()
 
-# Using try-except to catch the KeyboardInterrupt for a graceful exit
-try:
-    with sr.Microphone() as source:
-        print("Calibrating microphone...")
-        # Listen for 1 second and create the ambient noise energy level
-        recognizer.adjust_for_ambient_noise(source, duration=1)
-        
-        while True:  # Loop to keep listening and processing
-            print("\nGet ready to speak...")
-            time.sleep(1)  # Wait a bit before listening
-            print("Please speak now.")
-            
+with sr.Microphone() as source:
+    print("Calibrating microphone... Please wait.")
+    recognizer.adjust_for_ambient_noise(source, duration=0.5)
+    print("Calibration is complete. Press Ctrl+C to stop.")
+
+    try:
+        while True:  # Continuous loop
+            print("\nPlease speak now.")
             try:
-                # Record audio until silence is detected, with slightly increased timeout and phrase_time_limit
+                # Listening to the speech and capturing it for processing
                 audio_data = recognizer.listen(source, timeout=5, phrase_time_limit=10)
                 print("Processing...")
+                try:
+                    # Recognize speech using Google's speech recognition
+                    text = recognizer.recognize_google(audio_data)
+                    print("You said: " + text)
+                except sr.UnknownValueError:
+                    print("Sorry, I could not understand that.")
+                except sr.RequestError as e:
+                    print("Could not request results; {0}".format(e))
+            except sr.WaitTimeoutError:
+                print("Listening timed out while waiting for phrase to start")
                 
-                # Recognize speech using Google's speech recognition
-                text = recognizer.recognize_google(audio_data)
-                print("You said: " + text)
-
-                # Check if the user wants to exit
-                if text.lower() == "exit":
-                    print("Exiting...")
-                    break
-
-            except sr.UnknownValueError:
-                print("Google Speech Recognition could not understand audio.")
-            except sr.RequestError as e:
-                print(f"Could not request results from Google Speech Recognition service; {e}")
-
-except KeyboardInterrupt:
-    print("\nExiting...")  # Message to display when exiting the loop with Ctrl+C
+    except KeyboardInterrupt:
+        print("\nExiting...")
